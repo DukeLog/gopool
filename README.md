@@ -9,7 +9,7 @@ Managing gouroutines pool
 	slice := [][]int{1,2,3,4,5}
 	// Create goroutines pool
 	p := New(5)
-	// Run function f on each element of the slice by different goroutines
+	// Run function f on each element of the slice
 	p.Map(f, slice)
 	// Get each function result  as a slice
 	result := p.Join()
