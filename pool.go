@@ -70,13 +70,3 @@ func (this *Pool) Join() interface{} {
 	}
 	return ret.Interface()
 }
-
-func main() {
-	slice := [][]int{{3, 4, 5, 6}, {1, 2, 3, 4, 5}}
-	//log.Println(avg(slice))
-	p := New(5)
-	p.Map(avg, slice)
-	log.Println(p.Join())
-	//
-
-}
