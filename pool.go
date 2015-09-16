@@ -21,8 +21,13 @@ func (this *Pool) worker(f interface{}, i int) {
 
 	for i := range this.iChannel {
 		vi := reflect.ValueOf(i)
-		ret := vf.Call([]reflect.Value{vi})[0]
-		this.oChannel <- ret.Interface()
+		if this.return_type != nil {
+			ret := vf.Call([]reflect.Value{vi})[0]
+			this.oChannel <- ret.Interface()
+		} else {
+			vf.Call([]reflect.Value{vi})
+			this.oChannel <- nil
+		}
 	}
 }
 
@@ -43,8 +48,8 @@ func (this *Pool) Map(f interface{}, i interface{}) {
 	if ftype.NumIn() != 1 {
 		log.Panicf("`f` should have only one parameter, but get %d parameters", ftype.NumIn())
 	}
-	if ftype.NumOut() != 1 {
-		log.Panicf("`f` should return one value but it returns %d values", ftype.NumOut())
+	if ftype.NumOut() > 1 {
+		log.Panicf("`f` should return not more than one value but it returns %d values", ftype.NumOut())
 	}
 
 	for i := 0; i < this.size; i++ {
@@ -52,7 +57,12 @@ func (this *Pool) Map(f interface{}, i interface{}) {
 		go this.worker(f, i)
 	}
 	value_i := reflect.ValueOf(i)
-	this.return_type = ftype.Out(0)
+	if ftype.NumOut() == 1 {
+		this.return_type = ftype.Out(0)
+	} else {
+		this.return_type = nil
+	}
+
 	this.oChannel = make(chan interface{}, value_i.Len())
 	for ii := 0; ii < value_i.Len(); ii++ {
 		this.iChannel <- value_i.Index(ii).Interface()
@@ -63,10 +73,15 @@ func (this *Pool) Join() interface{} {
 	close(this.iChannel)
 	this.wg.Wait()
 	close(this.oChannel)
-	dynamic_slice := reflect.SliceOf(this.return_type)
-	ret := reflect.MakeSlice(dynamic_slice, 0, 0)
-	for i := range this.oChannel {
-		ret = reflect.Append(ret, reflect.ValueOf(i))
+	if this.return_type != nil {
+		dynamic_slice := reflect.SliceOf(this.return_type)
+		ret := reflect.MakeSlice(dynamic_slice, 0, 0)
+		for i := range this.oChannel {
+			ret = reflect.Append(ret, reflect.ValueOf(i))
+		}
+		return ret.Interface()
+	} else {
+		return nil
 	}
-	return ret.Interface()
+
 }

@@ -25,6 +25,9 @@ func avg(x []int) float64 {
 	}
 	return total / float64(len(x))
 }
+func dumb(x int) {
+
+}
 
 func TestSqr(t *testing.T) {
 	slice := []int{3,4,5,6,7,8}
@@ -63,4 +66,10 @@ func TestAvg(t *testing.T) {
 			}
 		}
 	}
+}
+func TestDumb(t *testing.T) {
+	slice := []int{3,4,5,6,7,8}
+	pool := New(10)
+	pool.Map(dumb, slice)
+	pool.Join()
 }
